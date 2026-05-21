@@ -1,0 +1,183 @@
+from flask import Flask, render_template_string, jsonify, request
+
+app = Flask(__name__)
+
+# Structured profile data to keep the HTML clean and dynamic
+CV_DATA = {
+    "name": "GURU PRASAD K",
+    "title": "DevOps / AWS Cloud Engineer",
+    "location": "Bangalore, India",
+    "email": "guru2024g3@outlook.com",
+    "linkedin": "linkedin.com/in/k-guru-prasad",
+    "phone": "+91-9449530539",
+    "summary": "DevOps/AWS Cloud Engineer with hands-on experience in cloud infrastructure monitoring, CI/CD automation, containerization, and AWS services. Passionate about automation, system reliability, and integrating GenAI tools (Gemini, Copilot) alongside Low-Code/No-Code workflows (n8n, Power Automate) to streamline operations.",
+    "skills": [
+        "AWS (EC2, EKS, S3, VPC, RDS, IAM, CloudWatch, CLI)", "Azure", "Jenkins", 
+        "Docker", "Kubernetes", "Helm", "Terraform", "Ansible", "Git/GitHub/GitLab", 
+        "CI/CD Pipelines", "GitHub Webhooks", "SonarQube", "Prometheus", "Grafana", 
+        "Python", "Bash", "Linux (RHEL, Ubuntu)", "n8n", "Microsoft         {
+            "role": "Technical Support Representative-L1 (DevOps)",
+            "company": "Joules to Watts (J2W)
+            "period": "Apr 2025 - Present",
+            "bullets": [
+                "Built and maintained CI/CD pipelines using Jenkins to automate workflows.",
+                "Integrated GitHub/GitLab repositories with Jenkins using webhooks.",
+                "Configured SonarQube quality gates for static code analysis.",
+                "Managed Dockerfiles, container images, and basic Kubernetes deployments.",
+                "Provisioned cloud resources via Terraform and monitored via CloudWatch/Azure Monitor.",
+                "Automated operational alerts and ticketing using n8n and Power Automate."
+            ]
+        },
+        {
+            "role": "Consultant - MFG IT Engineer",
+            "company": "Newwave Computing Limited",
+            "period": "May 2024 - Apr 2025",
+            "bullets": [
+                "Managed GxP equipment installation and validation using ValGenesis.",
+                "Executed IQ/OQ and CSV documentation for manufacturing applications.",
+                "Troubleshot hardware, automation systems, HMIs, and IPCs."
+            ]
+        }
+    ]
+}
+
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ data.name }} | Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased">
+
+    <header class="bg-slate-900 text-white py-16 px-6 shadow-md">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-4xl font-extrabold tracking-tight">{{ data.name }}</h1>
+                <p class="text-xl text-emerald-400 mt-2 font-medium">{{ data.title }}</p>
+                <p class="text-sm text-gray-400 mt-1">📍 {{ data.location }}</p>
+            </div>
+            <div class="text-sm text-gray-300 space-y-1">
+                <p>📧 <a href="mailto:{{ data.email }}" class="hover:text-emerald-400">{{ data.email }}</a></p>
+                <p>📱 {{ data.phone }}</p>
+                <p>🔗 <a href="https://{{ data.linkedin }}" target="_blank" class="hover:text-emerald-400">{{ data.linkedin }}</a></p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-12 space-y-12">
+        
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h2 class="text-2xl font-bold text-slate-800 border-b-2 border-emerald-500 pb-2 mb-4">Professional Summary</h2>
+            <p class="text-gray-600 leading-relaxed">{{ data.summary }}</p>
+        </section>
+
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h2 class="text-2xl font-bold text-slate-800 border-b-2 border-emerald-500 pb-2 mb-4">Technical Skills</h2>
+            <div class="flex flex-wrap gap-2">
+                {% for skill in data.skills %}
+                <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1.5 rounded-md font-mono border border-gray-200">
+                    {{ skill }}
+                </span>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h2 class="text-2xl font-bold text-slate-800 border-b-2 border-emerald-500 pb-2 mb-4">Professional Experience</h2>
+            <div class="space-y-8">
+                {% for exp in data.experience %}
+                <div class="relative pl-4 border-l-2 border-slate-200 hover:border-emerald-500 transition-colors">
+                    <div class="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mb-2">
+                        <h3 class="text-lg font-bold text-slate-800">{{ exp.role }}</h3>
+                        <span class="text-xs font-semibold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full mt-1 sm:mt-0">{{ exp.period }}</span>
+                    </div>
+                    <p class="text-sm font-medium text-slate-500 mb-3">{{ exp.company }}</p>
+                    <ul class="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
+                        {% for bullet in exp.bullets %}
+                        <li>{{ bullet }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+        </section>
+
+        <section class="bg-slate-950 text-slate-200 p-6 rounded-xl shadow-lg font-mono text-sm border border-slate-800">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 bg-red-500 rounded-full inline-block"></span>
+                    <span class="w-3 h-3 bg-yellow-500 rounded-full inline-block"></span>
+                    <span class="w-3 h-3 bg-green-500 rounded-full inline-block"></span>
+                    <span class="text-xs text-slate-500 pl-2">devops-terminal@guru-cloud</span>
+                </div>
+                <span class="text-xs text-slate-500">v1.0.0</span>
+            </div>
+            <div id="terminal-output" class="space-y-2 max-h-60 overflow-y-auto mb-4">
+                <p class="text-slate-400">Welcome to Guru's CV terminal. Type <span class="text-emerald-400">help</span> to view available commands.</p>
+            </div>
+            <div class="flex items-center">
+                <span class="text-emerald-400 font-bold mr-2">guru-guest$</span>
+                <input type="text" id="terminal-input" class="bg-transparent focus:outline-none text-slate-100 flex-grow" autofocus placeholder="Type a command...">
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center py-8 text-xs text-gray-400">
+        &copy; 2026 {{ data.name }} • Crafted with Flask & Tailwind CSS
+    </footer>
+
+    <script>
+        const input = document.getElementById('terminal-input');
+        const output = document.getElementById('terminal-output');
+
+        input.addEventListener('keydown', async function(e) {
+            if (e.key === 'Enter') {
+                const command = this.value.trim();
+                if (!command) return;
+
+                // Echo the executed command
+                output.innerHTML += `<p class="text-slate-400"><span class="text-emerald-400">guru-guest$</span> ${command}</p>`;
+                this.value = '';
+
+                // Handle commands locally or send to backend
+                const response = await fetch('/terminal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: command })
+                });
+                const data = await response.json();
+                
+                output.innerHTML += `<p class="text-slate-300 whitespace-pre-line">${data.result}</p>`;
+                output.scrollTop = output.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>
+"""
+
+@app.route('/')
+def index():
+    return render_template_string(HTML_TEMPLATE, data=CV_DATA)
+
+@app.route('/terminal', methods=['POST'])
+def terminal_command():
+    req_data = request.get_json()
+    command = req_data.get('command', '').strip().lower()
+
+    if command == 'help':
+        result = "Available commands:\n  - <span class='text-cyan-400'>skills</span>: List specialized automation competencies\n  - <span class='text-cyan-400'>clear</span>: Reset terminal feed\n  - <span class='text-cyan-400'>version</span>: Display operational infrastructure version"
+    elif command == 'skills':
+        result = "🤖 AI Integration: Gemini, GitHub Copilot\n⚡ Low-Code Automation: n8n, Power Automate\n🚀 Core Cloud/DevOps: AWS, Azure, Docker, Jenkins, Terraform"
+    elif command == 'version':
+        result = "Engine: Python Flask v3.0\nDeployment Status: CI/CD Verified Stable"
+    elif command == 'clear':
+        result = "Terminal history cleared."
+    else:
+        result = f"command not found: {command}. Type 'help' for valid parameters."
+
+    return jsonify({"result": result})
+
+if __name__ == '__main__':
